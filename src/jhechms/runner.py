@@ -108,10 +108,12 @@ class HecHmsRunner(  # type: ignore[misc]
                 'GRUs'
             )
 
+            # spatial_mode may be a SpatialMode enum — use its string value for paths
+            mode_str = self.spatial_mode.value if hasattr(self.spatial_mode, 'value') else str(self.spatial_mode)
             possible_paths = [
                 catchment_dir / f"{self.domain_name}_HRUs_{discretization}.shp",
-                catchment_dir / self.spatial_mode / self.experiment_id / f"{self.domain_name}_HRUs_{discretization}.shp",
-                catchment_dir / self.spatial_mode / f"{self.domain_name}_HRUs_{discretization}.shp",
+                catchment_dir / mode_str / self.experiment_id / f"{self.domain_name}_HRUs_{discretization}.shp",
+                catchment_dir / mode_str / f"{self.domain_name}_HRUs_{discretization}.shp",
             ]
 
             for path in possible_paths:
