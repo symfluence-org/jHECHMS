@@ -110,11 +110,22 @@ class HecHmsRunner(  # type: ignore[misc]
 
             # spatial_mode may be a SpatialMode enum — use its string value for paths
             mode_str = self.spatial_mode.value if hasattr(self.spatial_mode, 'value') else str(self.spatial_mode)
-            possible_paths = [
-                catchment_dir / f"{self.domain_name}_HRUs_{discretization}.shp",
-                catchment_dir / mode_str / self.experiment_id / f"{self.domain_name}_HRUs_{discretization}.shp",
-                catchment_dir / mode_str / f"{self.domain_name}_HRUs_{discretization}.shp",
-            ]
+
+            # Build candidate paths with case variations (GRUs vs GRUS)
+            disc_variants = {discretization, discretization.upper()}
+            possible_paths = []
+            for disc in disc_variants:
+                possible_paths.extend([
+                    catchment_dir / f"{self.domain_name}_HRUs_{disc}.shp",
+                    catchment_dir / mode_str / self.experiment_id / f"{self.domain_name}_HRUs_{disc}.shp",
+                    catchment_dir / mode_str / f"{self.domain_name}_HRUs_{disc}.shp",
+                ])
+            # Also search any existing experiment directory under the mode
+            mode_dir = catchment_dir / mode_str
+            if mode_dir.exists():
+                for disc in disc_variants:
+                    for shp in mode_dir.rglob(f"{self.domain_name}_HRUs_{disc}.shp"):
+                        possible_paths.append(shp)
 
             for path in possible_paths:
                 if path.exists():

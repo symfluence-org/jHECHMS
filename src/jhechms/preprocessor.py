@@ -126,13 +126,15 @@ class HecHmsPreProcessor(BaseModelPreProcessor, SpatialModeDetectionMixin):  # t
         try:
 
             # Extract precipitation
-            precip = self._extract_variable(ds, ['pptrate', 'pr', 'precipitation', 'PREC', 'tp'])
+            precip = self._extract_variable(ds, ['pptrate', 'pr', 'precipitation', 'PREC', 'tp',
+                                                    'precipitation_flux', 'precipitation_rate'])
             if precip is None:
                 self.logger.error("Precipitation variable not found")
                 return None
 
             # Extract temperature
-            temp = self._extract_variable(ds, ['airtemp', 'temp', 'temperature', 'T2', 't2m', 'tas'])
+            temp = self._extract_variable(ds, ['airtemp', 'temp', 'temperature', 'T2', 't2m', 'tas',
+                                                  'air_temperature'])
             if temp is None:
                 self.logger.error("Temperature variable not found")
                 return None
