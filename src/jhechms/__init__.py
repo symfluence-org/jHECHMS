@@ -18,7 +18,7 @@ Algorithms:
 Components:
     - HecHmsPreProcessor: Prepares forcing data (P, T, PET)
     - HecHmsRunner: Executes model simulations
-    - HecHmsPostprocessor: Extracts streamflow results
+    - HecHmsPostProcessor: Extracts streamflow results
     - HecHmsWorker: Handles calibration
 
 References:
@@ -54,7 +54,7 @@ _LAZY_IMPORTS = {
     # Main components
     'HecHmsPreProcessor': ('.preprocessor', 'HecHmsPreProcessor'),
     'HecHmsRunner': ('.runner', 'HecHmsRunner'),
-    'HecHmsPostprocessor': ('.postprocessor', 'HecHmsPostprocessor'),
+    'HecHmsPostProcessor': ('.postprocessor', 'HecHmsPostProcessor'),
     'HecHmsResultExtractor': ('.extractor', 'HecHmsResultExtractor'),
 
     # Parameters
@@ -108,7 +108,7 @@ def register() -> None:
     from .calibration.worker import HecHmsWorker
     from .config import HecHmsConfigAdapter
     from .extractor import HecHmsResultExtractor
-    from .postprocessor import HecHmsPostprocessor
+    from .postprocessor import HecHmsPostProcessor
     from .preprocessor import HecHmsPreProcessor
     from .runner import HecHmsRunner
 
@@ -117,7 +117,7 @@ def register() -> None:
         preprocessor=HecHmsPreProcessor,
         runner=HecHmsRunner,
         runner_method='run_hechms',
-        postprocessor=HecHmsPostprocessor,
+        postprocessor=HecHmsPostProcessor,
         config_adapter=HecHmsConfigAdapter,
         result_extractor=HecHmsResultExtractor,
         optimizer=HecHmsModelOptimizer,
@@ -151,7 +151,7 @@ if TYPE_CHECKING:
         create_initial_state,
         create_params_from_dict,
     )
-    from .postprocessor import HecHmsPostprocessor
+    from .postprocessor import HecHmsPostProcessor
     from .preprocessor import HecHmsPreProcessor
     from .runner import HecHmsRunner
 
@@ -160,7 +160,7 @@ __all__ = [
     # Main components
     'HecHmsPreProcessor',
     'HecHmsRunner',
-    'HecHmsPostprocessor',
+    'HecHmsPostProcessor',
     'HecHmsResultExtractor',
 
     # Configuration

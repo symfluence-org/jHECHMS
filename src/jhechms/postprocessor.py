@@ -5,13 +5,13 @@
 HEC-HMS Model Postprocessor.
 
 Extracts and processes HEC-HMS model output for analysis and visualization.
-Uses StandardModelPostprocessor for minimal boilerplate.
+Uses StandardModelPostProcessor for minimal boilerplate.
 """
 
-from symfluence.models.base.standard_postprocessor import StandardModelPostprocessor
+from symfluence.models.base.standard_postprocessor import StandardModelPostProcessor
 
 
-class HecHmsPostprocessor(StandardModelPostprocessor):
+class HecHmsPostProcessor(StandardModelPostProcessor):
     """
     Postprocessor for HEC-HMS model output.
 
