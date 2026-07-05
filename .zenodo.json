@@ -1,0 +1,18 @@
+{
+  "title": "jHECHMS: a differentiable JAX implementation of HEC-HMS model algorithms",
+  "description": "<p>Dual-backend (JAX + NumPy) implementation of native HEC-HMS hydrological algorithms — usable standalone or as a SYMFLUENCE plugin.</p><p>Part of the SYMFLUENCE JAX-native model family, described in the paper series accompanying SYMFLUENCE (Eythorsson et al., 2026, Water Resources Research).</p>",
+  "upload_type": "software",
+  "license": "Apache-2.0",
+  "keywords": [
+    "hydrology",
+    "hydrological modeling",
+    "JAX",
+    "differentiable modeling",
+    "calibration"
+  ],
+  "creators": [
+    {
+      "name": "Eythorsson, Darri"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: >-
+  If you use jHECHMS, please cite it using this metadata, alongside the
+  SYMFLUENCE companion papers (Eythorsson et al., 2026, Water Resources
+  Research) and the original model reference given in the README.
+title: "jHECHMS: a differentiable JAX implementation of HEC-HMS model algorithms"
+type: software
+license: Apache-2.0
+repository-code: "https://github.com/DarriEy/jHECHMS"
+keywords:
+  - hydrology
+  - hydrological modeling
+  - JAX
+  - differentiable modeling
+  - calibration
+authors:
+  - family-names: Eythorsson
+    given-names: Darri
