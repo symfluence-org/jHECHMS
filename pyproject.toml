@@ -22,7 +22,7 @@ dependencies = [
 
 [project.optional-dependencies]
 jax = ["jax", "jaxlib"]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "symfluence>=0.7.0"]
 
 [project.entry-points."symfluence.plugins"]
 hechms = "jhechms:register"
