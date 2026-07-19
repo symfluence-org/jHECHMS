@@ -13,7 +13,9 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import numpy as np
+import pandas as pd
 
+from symfluence.evaluation.metrics import calculate_all_metrics
 from symfluence.optimization.optimizers.base_model_optimizer import BaseModelOptimizer
 
 
@@ -109,27 +111,44 @@ class HecHmsModelOptimizer(BaseModelOptimizer):
             )
 
             # Calculate metrics using worker's in-memory data
-            from symfluence.evaluation.metrics import kge, nse
-
             obs = self.worker._observations
-            sim = runoff
+            time_index = getattr(self.worker, '_time_index', None)
 
-            if obs is not None and len(obs) == len(sim):
-                warmup = self.worker.warmup_days
-                obs_eval = obs[warmup:]
-                sim_eval = sim[warmup:]
+            if obs is not None and len(obs) == len(runoff) and time_index is not None:
+                calib_period = self._parse_period_config(
+                    'calibration_period', 'CALIBRATION_PERIOD')
+                eval_period = self._parse_period_config(
+                    'evaluation_period', 'EVALUATION_PERIOD')
 
-                valid = ~np.isnan(obs_eval) & ~np.isnan(sim_eval)
-                if np.sum(valid) > 30:
-                    kge_score = kge(obs_eval[valid], sim_eval[valid])
-                    nse_score = nse(obs_eval[valid], sim_eval[valid])
-                    self.logger.info(f"Final evaluation KGE: {kge_score:.4f}, NSE: {nse_score:.4f}")
+                # Warmup is skipped from the FULL simulation before filtering to
+                # the calibration period, matching how each calibration
+                # iteration was scored. The evaluation period starts after
+                # warmup, so it needs no further skip.
+                calib_metrics = self._calculate_period_metrics_inmemory(
+                    runoff, obs, time_index, calib_period, 'Calib', skip_warmup=True)
+                eval_metrics = {}
+                if eval_period[0] and eval_period[1]:
+                    eval_metrics = self._calculate_period_metrics_inmemory(
+                        runoff, obs, time_index, eval_period, 'Eval', skip_warmup=False)
 
-                    metrics = {'KGE': kge_score, 'NSE': nse_score}
-                    self._log_final_evaluation_results(metrics, {})
+                if calib_metrics or eval_metrics:
+                    all_metrics = {**calib_metrics, **eval_metrics}
+                    # Unprefixed aliases keep older readers of final_metrics working.
+                    for key, value in calib_metrics.items():
+                        unprefixed = key.replace('Calib_', '')
+                        all_metrics.setdefault(unprefixed, value)
+
+                    kge_score = calib_metrics.get('Calib_KGE')
+                    if kge_score is not None:
+                        self.logger.info(
+                            f"Final evaluation KGE: {kge_score:.4f}, "
+                            f"NSE: {calib_metrics.get('Calib_NSE', float('nan')):.4f}")
+                    self._log_final_evaluation_results(calib_metrics, eval_metrics)
 
                     return {
-                        'final_metrics': metrics,
+                        'final_metrics': all_metrics,
+                        'calibration_metrics': calib_metrics,
+                        'evaluation_metrics': eval_metrics,
                         'success': True,
                         'best_params': best_params,
                         'output_dir': str(final_output_dir),
@@ -143,3 +162,78 @@ class HecHmsModelOptimizer(BaseModelOptimizer):
             import traceback
             self.logger.debug(traceback.format_exc())
             return None
+
+    def _parse_period_config(self, attr_name: str, dict_key: str):
+        """Parse a period configuration string into (start, end) timestamps."""
+        period_str = self._get_config_value(
+            lambda: getattr(self.config.domain, attr_name, ''),
+            default='',
+            dict_key=dict_key
+        )
+        if not period_str:
+            return (None, None)
+        try:
+            dates = [d.strip() for d in str(period_str).split(',')]
+            if len(dates) >= 2:
+                return (pd.Timestamp(dates[0]), pd.Timestamp(dates[1]))
+        except (ValueError, AttributeError) as e:
+            self.logger.debug(f"Could not parse period string '{period_str}': {e}")
+        return (None, None)
+
+    def _calculate_period_metrics_inmemory(
+        self,
+        runoff: np.ndarray,
+        observations: np.ndarray,
+        time_index: 'pd.DatetimeIndex',
+        period: tuple,
+        prefix: str,
+        skip_warmup: bool = True
+    ) -> Dict[str, float]:
+        """Calculate prefixed metrics for one period from in-memory arrays.
+
+        Warmup is dropped from the FULL simulation before filtering to the
+        period, which is how each calibration iteration was scored:
+        run 2002-2009 -> drop 365 warmup days -> filter to 2004-2007. The
+        evaluation period already starts after warmup, so it passes
+        ``skip_warmup=False``.
+        """
+        try:
+            warmup = getattr(self.worker, 'warmup_days', 0) or 0
+            if skip_warmup and len(runoff) > warmup:
+                runoff = runoff[warmup:]
+                observations = observations[warmup:]
+                time_index = time_index[warmup:]
+
+            sim_series = pd.Series(runoff, index=time_index)
+            obs_series = pd.Series(observations, index=time_index)
+
+            if period[0] and period[1]:
+                mask = (time_index >= period[0]) & (time_index <= period[1])
+                sim_period, obs_period = sim_series[mask], obs_series[mask]
+                self.logger.debug(
+                    f"{prefix} period: {period[0]} to {period[1]}, {len(sim_period)} points")
+            else:
+                sim_period, obs_period = sim_series, obs_series
+
+            common_idx = sim_period.index.intersection(obs_period.index)
+            if len(common_idx) == 0:
+                self.logger.warning(f"No common indices for {prefix} period")
+                return {}
+
+            sim_aligned = sim_period.loc[common_idx].values
+            obs_aligned = obs_period.loc[common_idx].values
+            valid = ~(np.isnan(sim_aligned) | np.isnan(obs_aligned))
+            sim_valid, obs_valid = sim_aligned[valid], obs_aligned[valid]
+
+            if len(sim_valid) < 10:
+                self.logger.warning(
+                    f"Insufficient valid points for {prefix} metrics: {len(sim_valid)}")
+                return {}
+
+            metrics_result = calculate_all_metrics(
+                pd.Series(obs_valid), pd.Series(sim_valid))
+            return {f"{prefix}_{k}": v for k, v in metrics_result.items()}
+
+        except Exception as e:  # noqa: BLE001 — calibration resilience
+            self.logger.error(f"Failed to calculate {prefix} metrics: {e}")
+            return {}
