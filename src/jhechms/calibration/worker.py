@@ -302,15 +302,19 @@ class HecHmsWorker(InMemoryModelWorker):
             if self._time_index is not None and len(self._time_index) > 0:
                 doy_start = self._time_index[0].timetuple().tm_yday
 
+            cal_slice = self.get_calibration_slice()
+
             def loss_fn(params_array, param_names):
                 params_dict = dict(zip(param_names, params_array))
                 if metric.lower() == 'nse':
                     return nse_loss(params_dict, precip, temp, pet, obs,
                                    self.warmup_days, use_jax=True,
-                                   day_of_year_start=doy_start)
+                                   day_of_year_start=doy_start,
+                                   cal_slice=cal_slice)
                 return kge_loss(params_dict, precip, temp, pet, obs,
                                self.warmup_days, use_jax=True,
-                               day_of_year_start=doy_start)
+                               day_of_year_start=doy_start,
+                               cal_slice=cal_slice)
 
             grad_fn = jax.grad(loss_fn)
             param_names = list(params.keys())
@@ -362,15 +366,19 @@ class HecHmsWorker(InMemoryModelWorker):
             if self._time_index is not None and len(self._time_index) > 0:
                 doy_start = self._time_index[0].timetuple().tm_yday
 
+            cal_slice = self.get_calibration_slice()
+
             def loss_fn(params_array, param_names):
                 params_dict = dict(zip(param_names, params_array))
                 if metric.lower() == 'nse':
                     return nse_loss(params_dict, precip, temp, pet, obs,
                                    self.warmup_days, use_jax=True,
-                                   day_of_year_start=doy_start)
+                                   day_of_year_start=doy_start,
+                                   cal_slice=cal_slice)
                 return kge_loss(params_dict, precip, temp, pet, obs,
                                self.warmup_days, use_jax=True,
-                               day_of_year_start=doy_start)
+                               day_of_year_start=doy_start,
+                               cal_slice=cal_slice)
 
             value_and_grad_fn = jax.value_and_grad(loss_fn)
             param_names = list(params.keys())
