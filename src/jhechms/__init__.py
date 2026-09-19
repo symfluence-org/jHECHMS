@@ -125,6 +125,32 @@ def register() -> None:
         parameter_manager=HecHmsParameterManager,
     )
 
+    # Contribute HEC-HMS's calibration bounds to symfluence's catalogue.
+    #
+    # HEC-HMS predates the register_model_bounds seam, so symfluence carried a
+    # get_hechms_bounds() entry as a compatibility shim -- meaning a change to
+    # HEC-HMS's bounds needed a FRAMEWORK release. Registering here makes this
+    # package the owner: get_model_bounds('HECHMS') resolves what we register,
+    # ahead of the built-in entry, so this works against current symfluence
+    # and lets a later release drop the compat entry entirely.
+    #
+    # Values come from jhechms.parameters.PARAM_BOUNDS, already the single
+    # source for every other bounds consumer in this package, and verified
+    # identical to what the framework served (14 names, zero differences) --
+    # so adopting the seam changes no calibration result.
+    from symfluence.core.calibration.parameters import ParameterInfo, register_model_bounds
+
+    from .parameters import PARAM_BOUNDS
+
+    register_model_bounds(
+        "HECHMS",
+        params={
+            name: ParameterInfo(float(lo), float(hi), description=f"HEC-HMS {name}")
+            for name, (lo, hi) in PARAM_BOUNDS.items()
+        },
+        names=list(PARAM_BOUNDS),
+    )
+
 
 # Type hints for IDE support
 if TYPE_CHECKING:

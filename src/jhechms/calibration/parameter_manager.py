@@ -67,14 +67,24 @@ class HecHmsParameterManager(BaseParameterManager):
         return self.hechms_params
 
     def _load_parameter_bounds(self) -> Dict[str, Dict[str, float]]:
-        """Return HEC-HMS parameter bounds, preferring config values over registry defaults.
+        """Return HEC-HMS parameter bounds, preferring config values over package defaults.
 
         Priority:
         1. HECHMS_PARAM_BOUNDS from config (user-specified overrides)
-        2. Registry defaults for any parameters not in config
+        2. This package's own defaults for any parameters not in config
+
+        The defaults were ``get_hechms_bounds()`` from symfluence's shared
+        catalogue. HEC-HMS predates the ``register_model_bounds`` seam, so its
+        bounds lived in the framework and could not be changed without a
+        framework release. They now come from
+        ``jhechms.parameters.PARAM_BOUNDS`` -- the values this package already
+        uses everywhere else, verified identical to what the catalogue served
+        (14 names, zero differences).
         """
-        from symfluence.optimization.core.parameter_bounds_registry import get_hechms_bounds
-        bounds = get_hechms_bounds()
+        bounds = {
+            name: {'min': float(lo), 'max': float(hi)}
+            for name, (lo, hi) in PARAM_BOUNDS.items()
+        }
 
         config_bounds = self._get_config_value(
             lambda: self.config.model.hechms.param_bounds,
