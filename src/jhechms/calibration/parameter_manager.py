@@ -14,7 +14,8 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from jhechms.parameters import DEFAULT_PARAMS, PARAM_BOUNDS
-from symfluence.optimization.core.base_parameter_manager import BaseParameterManager
+
+from .._symfluence_compat import BaseParameterManager
 
 
 class HecHmsParameterManager(BaseParameterManager):
@@ -73,7 +74,7 @@ class HecHmsParameterManager(BaseParameterManager):
         1. HECHMS_PARAM_BOUNDS from config (user-specified overrides)
         2. Registry defaults for any parameters not in config
         """
-        from symfluence.optimization.core.parameter_bounds_registry import get_hechms_bounds
+        from .._symfluence_compat import get_hechms_bounds
         bounds = get_hechms_bounds()
 
         config_bounds = self._get_config_value(

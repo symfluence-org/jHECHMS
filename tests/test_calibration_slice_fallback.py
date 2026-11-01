@@ -14,8 +14,7 @@ implementation, and degrades to None rather than to "score everything".
 import pandas as pd
 import pytest
 
-import symfluence.optimization.workers.inmemory_worker as _iw
-
+from jhechms._symfluence_compat import InMemoryModelWorker
 from jhechms.calibration.worker import _calibration_slice
 
 WARMUP = 365
@@ -49,13 +48,13 @@ def idx():
 @pytest.fixture
 def without_shared_helper(monkeypatch):
     """Simulate a symfluence predating get_calibration_slice."""
-    if hasattr(_iw.InMemoryModelWorker, "get_calibration_slice"):
-        monkeypatch.delattr(_iw.InMemoryModelWorker, "get_calibration_slice")
+    if hasattr(InMemoryModelWorker, "get_calibration_slice"):
+        monkeypatch.delattr(InMemoryModelWorker, "get_calibration_slice")
 
 
 def _with_shared(worker):
     """Bind the real shared implementation, when this symfluence has one."""
-    shared = getattr(_iw.InMemoryModelWorker, "get_calibration_slice", None)
+    shared = getattr(InMemoryModelWorker, "get_calibration_slice", None)
     if shared is not None:
         worker.get_calibration_slice = shared.__get__(worker)
     return worker
@@ -71,7 +70,7 @@ def test_fallback_selects_the_calibration_window(idx, without_shared_helper):
 
 def test_fallback_matches_the_shared_implementation(idx):
     """Both paths must agree, or upgrading symfluence would move results."""
-    shared = getattr(_iw.InMemoryModelWorker, "get_calibration_slice", None)
+    shared = getattr(InMemoryModelWorker, "get_calibration_slice", None)
     if shared is None:
         pytest.skip("this symfluence has no shared implementation to compare against")
     assert _calibration_slice(_with_shared(_Worker(idx))) == _calibration_slice(_Worker(idx))

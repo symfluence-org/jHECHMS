@@ -15,9 +15,11 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from symfluence.data.utils.netcdf_utils import create_netcdf_encoding
-from symfluence.models.base import BaseModelPreProcessor
-from symfluence.models.mixins import SpatialModeDetectionMixin
+from ._symfluence_compat import (
+    BaseModelPreProcessor,
+    SpatialModeDetectionMixin,
+    create_netcdf_encoding,
+)
 
 
 class HecHmsPreProcessor(BaseModelPreProcessor, SpatialModeDetectionMixin):  # type: ignore[misc]
@@ -104,7 +106,7 @@ class HecHmsPreProcessor(BaseModelPreProcessor, SpatialModeDetectionMixin):  # t
         Tries model-ready store first, falls back to basin_averaged_data.
         Handles multi-file (monthly chunked) and single-file forcing data.
         """
-        from symfluence.models.utilities import ForcingDataProcessor
+        from ._symfluence_compat import ForcingDataProcessor
 
         fdp = ForcingDataProcessor(self.config, self.logger)
 
@@ -218,7 +220,7 @@ class HecHmsPreProcessor(BaseModelPreProcessor, SpatialModeDetectionMixin):  # t
 
     def _calculate_pet(self, forcing_data: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate PET using the Oudin method (or Hamon fallback)."""
-        from symfluence.models.mixins.pet_calculator import PETCalculatorMixin
+        from ._symfluence_compat import PETCalculatorMixin
 
         temp = forcing_data['temp']
         time_index = forcing_data['time']

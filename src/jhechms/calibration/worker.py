@@ -22,8 +22,8 @@ import pandas as pd
 
 from symfluence.core.constants import ModelDefaults
 from symfluence.core.mixins.project import resolve_data_subdir
-from symfluence.optimization.workers.base_worker import WorkerTask
-from symfluence.optimization.workers.inmemory_worker import HAS_JAX, InMemoryModelWorker
+
+from .._symfluence_compat import HAS_JAX, InMemoryModelWorker, WorkerTask
 
 # Lazy JAX import
 if HAS_JAX:
