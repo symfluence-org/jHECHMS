@@ -8,7 +8,7 @@ Extracts and processes HEC-HMS model output for analysis and visualization.
 Uses StandardModelPostProcessor for minimal boilerplate.
 """
 
-from symfluence.models.base.standard_postprocessor import StandardModelPostProcessor
+from ._symfluence_compat import StandardModelPostProcessor
 
 
 class HecHmsPostProcessor(StandardModelPostProcessor):

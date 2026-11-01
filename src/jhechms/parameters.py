@@ -22,17 +22,23 @@ References:
     Technical Reference Manual. Hydrologic Engineering Center, Davis, CA.
 """
 
+import importlib.util
 from typing import Any, Dict, NamedTuple, Tuple
 
 import numpy as np
 
-# Lazy JAX import with numpy fallback
-try:
-    import jax.numpy as jnp
-    HAS_JAX = True
-except ImportError:
-    HAS_JAX = False
-    jnp = None
+# JAX is imported on first use, not at module import, so reading the parameter
+# tables (bounds, defaults) does not pay for importing jax.
+HAS_JAX = importlib.util.find_spec("jax") is not None
+
+
+def _jax_numpy() -> Any:
+    """Return ``jax.numpy``, or None when JAX cannot be imported."""
+    try:
+        import jax.numpy as jnp
+    except ImportError:
+        return None
+    return jnp
 
 
 # =============================================================================
@@ -171,7 +177,8 @@ def create_params_from_dict(
     """
     full_params = {**DEFAULT_PARAMS, **params_dict}
 
-    if use_jax and HAS_JAX:
+    jnp = _jax_numpy() if use_jax else None
+    if jnp is not None:
         return HecHmsParameters(
             px_temp=jnp.array(full_params['px_temp']),
             base_temp=jnp.array(full_params['base_temp']),
@@ -222,7 +229,8 @@ def create_initial_state(
     Returns:
         HecHmsState namedtuple.
     """
-    if use_jax and HAS_JAX:
+    jnp = _jax_numpy() if use_jax else None
+    if jnp is not None:
         # Use jnp.maximum instead of Python max() to preserve JAX tracers
         s_max = 25400.0 / jnp.maximum(cn, 1.0) - 254.0
         return HecHmsState(

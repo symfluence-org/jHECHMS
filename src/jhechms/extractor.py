@@ -14,7 +14,7 @@ from typing import Dict, List, cast
 import pandas as pd
 import xarray as xr
 
-from symfluence.models.base import ModelResultExtractor
+from ._symfluence_compat import ModelResultExtractor
 
 
 class HecHmsResultExtractor(ModelResultExtractor):

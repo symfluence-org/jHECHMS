@@ -15,8 +15,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 import pandas as pd
 
-from symfluence.evaluation.metrics import calculate_all_metrics
-from symfluence.optimization.optimizers.base_model_optimizer import BaseModelOptimizer
+from .._symfluence_compat import BaseModelOptimizer, calculate_all_metrics
 
 
 class HecHmsModelOptimizer(BaseModelOptimizer):

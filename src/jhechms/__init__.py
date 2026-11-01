@@ -101,29 +101,28 @@ def __dir__():
 
 
 def register() -> None:
-    """Register HEC-HMS components with symfluence plugin registry."""
-    from symfluence.core.registry import model_manifest
-    from .calibration.optimizer import HecHmsModelOptimizer
-    from .calibration.parameter_manager import HecHmsParameterManager
-    from .calibration.worker import HecHmsWorker
-    from .config import HecHmsConfigAdapter
-    from .extractor import HecHmsResultExtractor
-    from .postprocessor import HecHmsPostProcessor
-    from .preprocessor import HecHmsPreProcessor
-    from .runner import HecHmsRunner
+    """Register HEC-HMS components with symfluence plugin registry.
 
-    model_manifest(
-        "HECHMS",
-        preprocessor=HecHmsPreProcessor,
-        runner=HecHmsRunner,
-        runner_method='run_hechms',
-        postprocessor=HecHmsPostProcessor,
-        config_adapter=HecHmsConfigAdapter,
-        result_extractor=HecHmsResultExtractor,
-        optimizer=HecHmsModelOptimizer,
-        worker=HecHmsWorker,
-        parameter_manager=HecHmsParameterManager,
-    )
+    Only the config adapter is imported here: it is light, and model_manifest
+    derives the config schema from it. Every other component is registered by
+    dotted path and imported on first lookup, so plugin discovery during
+    ``import symfluence`` does not load the calibration stack or JAX.
+    """
+    from symfluence.core.registries import R
+    from symfluence.core.registry import model_manifest
+
+    from .config import HecHmsConfigAdapter
+
+    model_manifest("HECHMS", config_adapter=HecHmsConfigAdapter)
+
+    pkg = __name__
+    R.preprocessors.add_lazy("HECHMS", f"{pkg}.preprocessor.HecHmsPreProcessor")
+    R.runners.add_lazy("HECHMS", f"{pkg}.runner.HecHmsRunner", runner_method='run_hechms')
+    R.postprocessors.add_lazy("HECHMS", f"{pkg}.postprocessor.HecHmsPostProcessor")
+    R.result_extractors.add_lazy("HECHMS", f"{pkg}.extractor.HecHmsResultExtractor")
+    R.optimizers.add_lazy("HECHMS", f"{pkg}.calibration.optimizer.HecHmsModelOptimizer")
+    R.workers.add_lazy("HECHMS", f"{pkg}.calibration.worker.HecHmsWorker")
+    R.parameter_managers.add_lazy("HECHMS", f"{pkg}.calibration.parameter_manager.HecHmsParameterManager")
 
 
 # Type hints for IDE support

@@ -8,6 +8,7 @@ Handles HEC-HMS model execution, output processing, and result saving.
 Lumped mode with JAX/NumPy backend support.
 """
 
+import importlib.util
 import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -17,19 +18,19 @@ import pandas as pd
 import xarray as xr
 
 from symfluence.core.exceptions import ModelExecutionError, symfluence_error_handler
-from symfluence.data.utils.netcdf_utils import create_netcdf_encoding
-from symfluence.geospatial.geometry_utils import calculate_catchment_area_km2
-from symfluence.models.base import BaseModelRunner
-from symfluence.models.execution import SpatialOrchestrator
-from symfluence.models.mixins import ObservationLoaderMixin, SpatialModeDetectionMixin
 
-# Lazy JAX import
-try:
-    import jax.numpy as jnp
-    HAS_JAX = True
-except ImportError:
-    HAS_JAX = False
-    jnp = None
+from ._symfluence_compat import (
+    BaseModelRunner,
+    ObservationLoaderMixin,
+    SpatialModeDetectionMixin,
+    SpatialOrchestrator,
+    calculate_catchment_area_km2,
+    create_netcdf_encoding,
+)
+
+# Only used to pick the default backend; jax itself is imported where the JAX
+# path runs, so importing this module stays cheap.
+HAS_JAX = importlib.util.find_spec("jax") is not None
 
 
 class HecHmsRunner(  # type: ignore[misc]
@@ -224,6 +225,8 @@ class HecHmsRunner(  # type: ignore[misc]
             use_jax = self.backend == 'jax' and MODEL_HAS_JAX
 
             if use_jax:
+                import jax.numpy as jnp
+
                 precip = jnp.array(precip)
                 temp = jnp.array(temp)
                 pet = jnp.array(pet)
